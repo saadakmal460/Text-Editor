@@ -2,6 +2,9 @@
 #include<stack>
 #include<deque>
 #include<list>
+#include<algorithm>
+#include<Windows.h>
+#include<conio.h>
 #include<fstream>
 using namespace std;
 
@@ -101,6 +104,287 @@ public:
         }
     }
     
+
+    void EditFile(ofstream& wrt)
+    {
+        system("color F0");
+        char c;
+        c = _getch();
+        gotoxy(currentRow, currentColumn);
+        cout << c;
+
+        *columnIter = c;
+        currentColumn++;
+
+        while (true)
+        {
+            if (currentRow == 0)
+            {
+                gotoxy(currentRow, currentColumn);
+            }
+            else
+            {
+                gotoxy(currentRow, currentColumn + 1);
+            }
+
+            c = _getch();
+
+            if (c == -32)
+            {
+                A:
+                c = _getch();
+
+                if (c == 72) // up arrow key
+                {
+                    if (currentRow == 0)
+                    {
+                        continue;
+                    }
+
+                    rowIter--;
+                    columnIter = (*rowIter).begin();
+                    currentRow--;
+                    currentColumn = 0;
+                }
+
+                else if (c == 80) // down arrow key
+                {
+                    rowIter++;
+                    columnIter = (*rowIter).begin();
+                    currentColumn++;
+                    currentColumn = 0;
+                }
+
+                else if (c == 75)//Left arrow key
+                {
+                    if (currentColumn - 1 > 0)
+                    {
+                        columnIter--;
+                        currentColumn--;
+                    }
+                }
+
+                else if (c == 77)//Right arrow key
+                {
+                    if (currentColumn == 159)
+                    {
+                        continue;
+                    }
+
+                    columnIter++;
+                    currentColumn++;
+                }
+
+                else if (c == 83)//Delete key
+                {
+                    auto temp = columnIter;
+                    columnIter++;
+                    (*rowIter).erase(columnIter);
+                    columnIter = temp;
+                    system("cls");
+                    print();
+                    UpdateUndo();
+                }
+                if (currentColumn == 0)
+                {
+                    gotoxy(currentRow, 0);
+                    c = _getch();
+                    if (c == -32)
+                    {
+                        goto A;
+                    }
+                    (*rowIter).push_front(c);
+                    columnIter = (*rowIter).begin();
+                    currentColumn = 1;
+                    system("cls");
+                    print();
+                    UpdateUndo();
+                }
+                continue;
+
+            }
+
+            else if (c == 13)
+            {
+                auto temp = rowIter;
+                rowIter++;
+                text.insert(rowIter, list<char>());
+                rowIter = ++temp;
+                currentRow++;
+                currentColumn = 0;
+                gotoxy(currentRow, currentColumn);
+                c = _getch();
+                if (c == -32)
+                {
+                    goto A;
+                }
+                (*rowIter).push_back(c);
+                columnIter = (*rowIter).begin();
+                system("cls");
+                print();
+                UpdateUndo();
+                continue;
+            }
+
+            else if (c == 8)
+            {
+                if (currentColumn == 0)
+                {
+                    gotoxy(currentRow, 0);
+                    c = _getch();
+                    if (c == -32)
+                    {
+                        goto A;
+                    }
+
+                    if (c == 8)
+                    {
+                        continue;
+                    }
+
+                    (*columnIter) = c;
+                    columnIter = (*rowIter).begin();
+                    currentColumn = 1;
+                    continue;
+                }
+                auto temp = --columnIter;
+                columnIter++;
+                (*rowIter).erase(columnIter);
+                columnIter = temp;
+                currentColumn--;
+                system("cls");
+                print();
+                UpdateUndo();
+                continue;
+            }
+
+            else if (c == 26)//Undo
+            {
+                if (!undo.empty())
+                {
+                    state s = undo.back();
+                    LoadState(s);
+                    redo.push(undo.back());
+                    undo.pop_back();
+                    system("cls");
+                    print();
+                }
+                continue;
+            }
+
+            else if (c == 25)
+            {
+                if (!redo.empty())
+                {
+                    undo.push_back(redo.top());
+                    state s = redo.top();
+                    redo.pop();
+                    LoadState(s);
+
+                    system("cls");
+                    print();
+                }
+                continue;
+
+            }
+
+            else if (c == 27)
+            {
+                SaveInFile(wrt);
+
+            }
+
+            if (currentColumn == 100)
+            {
+                text.push_back(list<char>());
+                rowIter++;
+                currentColumn = 0;
+                currentRow++;
+                (*rowIter).push_back(c);
+                columnIter = (*rowIter).begin();
+            }
+            else
+            {
+                auto temp = columnIter;
+                columnIter++;
+                (*rowIter).insert(columnIter, c);
+                columnIter = ++temp;
+                currentColumn++;
+            }
+        }
+        system("cls");
+        print();
+        UpdateUndo();
+    }
+
+    void SaveInFile(ofstream& wrt)
+    {
+        for (auto r = text.begin(); r != text.end(); r++)
+        {
+            for (auto c = (*r).begin(); c != (*r).end(); c++)
+            {
+                wrt << *c;
+            }
+            wrt << '\n';
+        }
+    }
+
+    void print()
+    {
+        for (auto r = text.begin(); r != text.end(); r++)
+        {
+            for (auto c = (*r).begin(); c != (*r).end(); c++)
+            {
+                cout << *c;
+            }
+            cout << endl;
+        }
+    }
+
+
+    void UpdateUndo()
+    {
+        if (undo.size() > 5)
+        {
+            undo.erase(undo.begin());
+        }
+
+        state s = SaveState();
+        undo.push_back(s);
+    }
+
+    void CreateNewFile()
+    {
+        system("cls");
+        string fileName;
+        cout << "Enter file name: ";
+        cin >> fileName;
+
+        if (find(files.begin(), files.end(), fileName) != files.end())
+        {
+            cout << "File already exist";
+            return;
+        }
+
+        files.push_back(fileName);
+        ofstream wrt(fileName.c_str());
+
+
+        system("cls");
+        EditFile(wrt);
+        system("cls");
+        system("color 09");
+        wrt.close();
+
+    }
+
+    void gotoxy(int x, int y)
+    {
+        COORD coordinates;
+        coordinates.X = x;
+        coordinates.Y = y;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordinates);
+    }
 }; 
 
 int main()
