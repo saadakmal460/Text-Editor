@@ -6,6 +6,7 @@
 #include<Windows.h>
 #include<conio.h>
 #include<fstream>
+#include <vector>
 using namespace std;
 
 list<string> files;
@@ -48,6 +49,7 @@ public:
         auto iterRow = s->text.begin();
         for (auto row = text.begin(); row != text.end(); row++, iterRow++)
         {
+            s->text.push_back(list<char>());
             for (auto col = (*row).begin(); col != (*row).end(); col++)
             {
                 char ch = *col;
@@ -56,8 +58,9 @@ public:
         }
         s->rowIter = s->text.begin();
         s->columnIter = (*s->rowIter).begin();
+        //s->column = currentColumn;
         
-        for (int i = 0; i < currentRow; i++)
+        /*for (int i = 0; i < currentRow; i++)
         {
             s->rowIter++;
         }
@@ -65,7 +68,7 @@ public:
         for (int i = 0; i < currentColumn; i++)
         {
             columnIter++;
-        }
+        }*/
         
         s->column = currentColumn;
         s->row = currentRow;
@@ -113,7 +116,7 @@ public:
         gotoxy(currentRow, currentColumn);
         cout << c;
 
-        *columnIter = c;
+        (*columnIter) = c;
         currentColumn++;
 
         while (true)
@@ -131,7 +134,7 @@ public:
 
             if (c == -32)
             {
-                A:
+            A:
                 c = _getch();
 
                 if (c == 72) // up arrow key
@@ -204,7 +207,7 @@ public:
 
             }
 
-            else if (c == 13)
+            else if (c == 13) // Enter
             {
                 auto temp = rowIter;
                 rowIter++;
@@ -272,8 +275,8 @@ public:
                 continue;
             }
 
-            else if (c == 25)
-            {
+             else if (c == 25)//redo
+             {
                 if (!redo.empty())
                 {
                     undo.push_back(redo.top());
@@ -286,12 +289,13 @@ public:
                 }
                 continue;
 
-            }
+             }
 
-            else if (c == 27)
+            else if (c == 27)//esc to exit
             {
                 SaveInFile(wrt);
-
+                break;
+                
             }
 
             if (currentColumn == 100)
@@ -311,10 +315,12 @@ public:
                 columnIter = ++temp;
                 currentColumn++;
             }
+
+            system("cls");
+            print();
+            UpdateUndo();
         }
-        system("cls");
-        print();
-        UpdateUndo();
+        
     }
 
     void SaveInFile(ofstream& wrt)
@@ -327,6 +333,55 @@ public:
             }
             wrt << '\n';
         }
+    }
+
+    void OpenFile()
+    {
+        system("cls");
+        string name;
+        cout << "Enter file name: ";
+        cin >> name;
+        if (find(files.begin(), files.end(), name) == files.end())
+        {
+            cout << "File does not exist\n";
+            return;
+        }
+        ifstream read(name.c_str());
+        OpenSavedFile(read);
+        read.close();
+
+        ofstream write(name.c_str());
+        system("cls");
+        print();
+        gotoxy(currentRow, currentColumn);
+        EditFile(write);
+        system("cls");
+        system("color 09");
+    }
+
+
+    void OpenSavedFile(ifstream& read)
+    {
+        char ch;
+
+        while (!read.eof())
+        {
+            read.get(ch);
+            if (ch != '\n')
+            {
+                (*rowIter).push_back(ch);
+            }
+            else
+            {
+                text.push_back(list<char>());
+                rowIter++;
+            }
+        }
+        rowIter = text.begin();
+        columnIter = (*rowIter).begin();
+        currentRow = 0;
+        currentColumn = 0;
+        gotoxy(currentRow, currentColumn);
     }
 
     void print()
@@ -367,6 +422,8 @@ public:
         }
 
         files.push_back(fileName);
+
+
         ofstream wrt(fileName.c_str());
 
 
@@ -376,6 +433,54 @@ public:
         system("color 09");
         wrt.close();
 
+    }
+
+    int choice(ifstream& read)
+    {
+        system("cls");
+        int choice = -1;
+        int r = 0;
+        int c = 0;
+
+        gotoxy(80,6 );
+        cout << "New File" << endl;
+
+        gotoxy(80,9);
+        cout << "Open File" << endl;
+
+        gotoxy(80,12);
+        cout << "Exit" << endl;
+
+        cin >> choice;
+
+        if (choice == 1)
+        {
+            CreateNewFile();
+        }
+        if (choice == 2)
+        {
+            OpenFile();
+        }
+        if (choice == 3)
+        {
+            Closing(read);
+        }
+        return choice;
+    }
+
+
+    void Closing(ifstream& read)
+    {
+        
+        read.close();
+        ofstream write;
+        write.open("SaveFile.txt");
+
+        for (auto i = files.begin(); i != files.end(); i++)
+        {
+            write << (*i)<<endl;
+        }
+        write.close();   
     }
 
     void gotoxy(int x, int y)
@@ -390,8 +495,11 @@ public:
 int main()
 {
     system("color 09");
+
+    
     int row = 0;
     int column = 0;
+    int choice = 0;
 
     TextEditor e;
     ifstream reader;
@@ -402,9 +510,9 @@ int main()
 
     e.Input(reader);
 
-    while (true)
+    while (choice!=3)
     {
-
+        choice = e.choice(reader);
     }
 
     reader.close();
