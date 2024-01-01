@@ -110,10 +110,10 @@ public:
 
     void EditFile(ofstream& wrt)
     {
-        system("color F0");
+        //system("color F0");
         char c;
         c = _getch();
-        gotoxy(currentRow, currentColumn);
+        gotoxy(currentColumn, currentRow);
         cout << c;
 
         (*columnIter) = c;
@@ -123,11 +123,11 @@ public:
         {
             if (currentRow == 0)
             {
-                gotoxy(currentRow, currentColumn);
+                gotoxy(currentColumn, currentRow);
             }
             else
             {
-                gotoxy(currentRow, currentColumn + 1);
+                gotoxy(currentColumn+1, currentRow);
             }
 
             c = _getch();
@@ -150,15 +150,17 @@ public:
                     currentColumn = 0;
                 }
 
-                else if (c == 80) // down arrow key
+                if (c == 80) // down arrow key
                 {
-                    rowIter++;
-                    columnIter = (*rowIter).begin();
-                    currentColumn++;
-                    currentColumn = 0;
+                    
+                        rowIter++;
+                        columnIter = (*rowIter).begin();
+                        currentRow++;
+                        currentColumn = 0;
+                    
                 }
 
-                else if (c == 75)//Left arrow key
+                if (c == 75)//Left arrow key
                 {
                     if (currentColumn - 1 > 0)
                     {
@@ -167,12 +169,12 @@ public:
                     }
                 }
 
-                else if (c == 77)//Right arrow key
+                if (c == 77)//Right arrow key
                 {
-                    if (currentColumn == 159)
+                    /*if (currentColumn == 159);
                     {
                         continue;
-                    }
+                    }*/
 
                     columnIter++;
                     currentColumn++;
@@ -190,7 +192,7 @@ public:
                 }
                 if (currentColumn == 0)
                 {
-                    gotoxy(currentRow, 0);
+                    gotoxy(0, currentRow);
                     c = _getch();
                     if (c == -32)
                     {
@@ -215,7 +217,7 @@ public:
                 rowIter = ++temp;
                 currentRow++;
                 currentColumn = 0;
-                gotoxy(currentRow, currentColumn);
+                gotoxy(currentColumn, currentRow);
                 c = _getch();
                 if (c == -32)
                 {
@@ -233,7 +235,7 @@ public:
             {
                 if (currentColumn == 0)
                 {
-                    gotoxy(currentRow, 0);
+                    gotoxy(0, currentRow);
                     c = _getch();
                     if (c == -32)
                     {
@@ -275,8 +277,8 @@ public:
                 continue;
             }
 
-             else if (c == 25)//redo
-             {
+            else if (c == 25)//redo
+            {
                 if (!redo.empty())
                 {
                     undo.push_back(redo.top());
@@ -289,13 +291,13 @@ public:
                 }
                 continue;
 
-             }
+            }
 
             else if (c == 27)//esc to exit
             {
                 SaveInFile(wrt);
                 break;
-                
+
             }
 
             if (currentColumn == 100)
@@ -320,7 +322,7 @@ public:
             print();
             UpdateUndo();
         }
-        
+
     }
 
     void SaveInFile(ofstream& wrt)
@@ -353,7 +355,7 @@ public:
         ofstream write(name.c_str());
         system("cls");
         print();
-        gotoxy(currentRow, currentColumn);
+        gotoxy(currentColumn, currentRow);
         EditFile(write);
         system("cls");
         system("color 09");
@@ -381,7 +383,7 @@ public:
         columnIter = (*rowIter).begin();
         currentRow = 0;
         currentColumn = 0;
-        gotoxy(currentRow, currentColumn);
+        gotoxy(currentColumn, currentRow);
     }
 
     void print()
