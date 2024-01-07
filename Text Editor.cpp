@@ -44,7 +44,7 @@ public:
 
 	state SaveState()
 	{
-		state* s = new state();
+		state* s = new state;
 		s->text.push_back(list<char>());
 		auto iterRow = s->text.begin();
 		for (auto row = text.begin(); row != text.end(); row++, iterRow++)
@@ -71,17 +71,19 @@ public:
 		rowIter = text.begin();
 		currentColumn = s.column;
 		currentRow = s.row;
-
-		for (int i = 0; i < s.row; i++)
+		
+		
+		for (int i = 0; i < currentRow; i++)
 		{
 			rowIter++;
 		}
 
-		for (int i = 0; i < s.column; i++)
+		columnIter = (*rowIter).begin();
+		
+		for (int i = 0; i < currentColumn; i++)
 		{
 			columnIter++;
 		}
-
 	}
 
 	void Input(ifstream& rdr)
@@ -143,7 +145,11 @@ public:
 				}
 
 				if (c == 80) // down arrow key
-				{
+				{ 
+					if (next(rowIter) == text.end())
+					{
+						continue;
+					}
 					
 					rowIter++;
 					columnIter = (*rowIter).begin();
@@ -167,7 +173,6 @@ public:
 
 					if (columnIter == (*rowIter).end())
 					{
-						//cout << "yes";
 
 						continue;
 					}
@@ -294,6 +299,7 @@ public:
 					currentColumn = 1;
 					continue;
 				}
+				
 				auto temp = --columnIter;
 				columnIter++;
 				(*rowIter).erase(columnIter);
@@ -305,7 +311,7 @@ public:
 				continue;
 			}
 
-			else if (c == 26)//Undo
+			if (GetAsyncKeyState(VK_LCONTROL) && GetAsyncKeyState('Z'))//Undo
 			{
 				if (!undo.empty())
 				{
@@ -319,7 +325,7 @@ public:
 				continue;
 			}
 
-			else if (c == 25)//redo
+			if (GetAsyncKeyState(VK_LCONTROL) && GetAsyncKeyState('Y'))//redo
 			{
 				if (!redo.empty())
 				{
@@ -327,7 +333,6 @@ public:
 					state s = redo.top();
 					redo.pop();
 					LoadState(s);
-
 					system("cls");
 					print();
 				}
